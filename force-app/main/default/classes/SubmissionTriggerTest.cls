@@ -1,8 +1,18 @@
 @isTest
 private class SubmissionTriggerTest {
 
+    private class TwilioMock implements HttpCalloutMock {
+        public HttpResponse respond(HttpRequest req) {
+            HttpResponse res = new HttpResponse();
+            res.setStatusCode(201);
+            res.setBody('{"sid":"SM_test","status":"queued"}');
+            return res;
+        }
+    }
+
     @isTest
     static void testProgressRecalculatesOnScore() {
+        Test.setMock(HttpCalloutMock.class, new TwilioMock());
         Contact student = TestDataFactory.createStudent();
         Course__c course = TestDataFactory.createCourse('Beginner');
         Module__c module1 = TestDataFactory.createModule(course.Id, 1);
@@ -19,6 +29,7 @@ private class SubmissionTriggerTest {
 
     @isTest
     static void testNoRecalcWhenScoreNull() {
+        Test.setMock(HttpCalloutMock.class, new TwilioMock());
         Contact student = TestDataFactory.createStudent();
         Course__c course = TestDataFactory.createCourse('Beginner');
         Module__c module1 = TestDataFactory.createModule(course.Id, 1);
