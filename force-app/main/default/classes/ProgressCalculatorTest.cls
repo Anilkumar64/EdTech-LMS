@@ -1,5 +1,6 @@
 @IsTest
 private class ProgressCalculatorTest {
+
     @IsTest
     static void calculatesOneHundredPercent() {
         LmsTestDataFactory.Scenario data = LmsTestDataFactory.createScenario('PC1', 2, 1, false);
@@ -56,7 +57,11 @@ private class ProgressCalculatorTest {
         LmsTestDataFactory.Scenario first = LmsTestDataFactory.createScenario('PC5A', 2, 1, false);
         LmsTestDataFactory.Scenario second = LmsTestDataFactory.createScenario('PC5B', 2, 1, false);
         List<Submission__c> submissions = LmsTestDataFactory.buildScoredSubmissions(first, 100);
-        submissions.add(new Submission__c(Assignment__c = second.assignments[0].Id, Enrollment__c = second.enrollment.Id, Score__c = 100));
+        submissions.add(new Submission__c(
+            Assignment__c = second.assignments[0].Id,
+            Enrollment__c = second.enrollment.Id,
+            Score__c = 100
+        ));
 
         Test.startTest();
         insert submissions;
