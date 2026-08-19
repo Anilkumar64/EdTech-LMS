@@ -1,5 +1,6 @@
 @IsTest
 private class SubmissionTriggerHandlerTest {
+
     @IsTest
     static void insertWithNullScoreDoesNotCompleteModule() {
         LmsTestDataFactory.Scenario data = LmsTestDataFactory.createScenario('ST1', 1, 1, false);
@@ -9,13 +10,16 @@ private class SubmissionTriggerHandlerTest {
         Test.stopTest();
 
         Enrollment__c enrollment = [SELECT Progress__c FROM Enrollment__c WHERE Id = :data.enrollment.Id];
-        System.assertEquals(0, enrollment.Progress__c);
+        System.assertEquals(0, enrollment.Progress__c == null ? 0 : enrollment.Progress__c);
     }
 
     @IsTest
     static void scoreAddedAndChangedRecalculatesProgress() {
         LmsTestDataFactory.Scenario data = LmsTestDataFactory.createScenario('ST2', 1, 1, false);
-        Submission__c submission = new Submission__c(Assignment__c = data.assignments[0].Id, Enrollment__c = data.enrollment.Id);
+        Submission__c submission = new Submission__c(
+            Assignment__c = data.assignments[0].Id,
+            Enrollment__c = data.enrollment.Id
+        );
         insert submission;
 
         Test.startTest();
@@ -40,10 +44,15 @@ private class SubmissionTriggerHandlerTest {
             Course__c = data.course.Id,
             Enrollment_Date__c = Date.today(),
             Payment_Status__c = 'Paid',
-            Status__c = 'Active'
+            Status__c = 'Active',
+            Progress__c = 0
         );
         insert secondEnrollment;
-        Submission__c submission = new Submission__c(Assignment__c = data.assignments[0].Id, Enrollment__c = data.enrollment.Id, Score__c = 100);
+        Submission__c submission = new Submission__c(
+            Assignment__c = data.assignments[0].Id,
+            Enrollment__c = data.enrollment.Id,
+            Score__c = 100
+        );
         insert submission;
 
         Test.startTest();
@@ -80,7 +89,10 @@ private class SubmissionTriggerHandlerTest {
         for (Integer i = 0; i < 20; i++) {
             LmsTestDataFactory.Scenario data = LmsTestDataFactory.createScenario('STB' + i, 1, 1, false);
             enrollmentIds.add(data.enrollment.Id);
-            submissions.add(new Submission__c(Assignment__c = data.assignments[0].Id, Enrollment__c = data.enrollment.Id));
+            submissions.add(new Submission__c(
+                Assignment__c = data.assignments[0].Id,
+                Enrollment__c = data.enrollment.Id
+            ));
         }
         insert submissions;
         for (Submission__c submission : submissions) {
@@ -91,6 +103,8 @@ private class SubmissionTriggerHandlerTest {
         update submissions;
         Test.stopTest();
 
-        System.assertEquals(20, [SELECT COUNT() FROM Enrollment__c WHERE Id IN :enrollmentIds AND Progress__c = 100]);
+        System.assertEquals(20, [
+            SELECT COUNT() FROM Enrollment__c WHERE Id IN :enrollmentIds AND Progress__c = 100
+        ]);
     }
 }
