@@ -1,0 +1,85 @@
+public with sharing class CertificatePDFGenerator implements Queueable {
+
+    private List<Id> certificateIds;
+
+    public CertificatePDFGenerator(List<Id> certificateIds) {
+        this.certificateIds = certificateIds;
+    }
+
+    public void execute(QueueableContext context) {
+        List<Certificate__c> certs = [
+            SELECT Id, Enrollment__c, Enrollment__r.Student__r.Email,
+                   Enrollment__r.Student__r.Name, Enrollment__r.Course__r.Name,
+                   Issued_Date__c
+            FROM Certificate__c
+            WHERE Id IN :certificateIds
+        ];
+
+        // 1. Generate PDF for each cert and attach as ContentVersion
+        List<ContentVersion> versionsToInsert = new List<ContentVersion>();
+
+        for (Certificate__c cert : certs) {
+            Blob pdfBlob = generatePdfBlob(cert);
+
+            ContentVersion cv = new ContentVersion();
+            cv.Title = 'Certificate_' + cert.Id;
+            cv.PathOnClient = 'Certificate_' + cert.Id + '.pdf';
+            cv.VersionData = pdfBlob;
+            cv.FirstPublishLocationId = cert.Id; // attaches directly to the Certificate record
+            versionsToInsert.add(cv);
+        }
+
+        if (!versionsToInsert.isEmpty()) {
+            insert versionsToInsert;
+        }
+
+        // 2. Email the PDF + trigger SMS per certificate
+        for (Certificate__c cert : certs) {
+            sendCertificateEmail(cert);
+            TwilioSMSCallout.sendSMSAsync(cert.Enrollment__c, 'Certificate');
+        }
+    }
+
+    private Blob generatePdfBlob(Certificate__c cert) {
+        // Requires a Visualforce page named "CertificatePDF" with renderAs="pdf"
+        // that takes a certId parameter and renders the certificate layout.
+        if (Test.isRunningTest()) {
+            return Blob.valueOf('Test PDF content');
+        }
+        PageReference pdfPage = Page.CertificatePDF;
+        pdfPage.getParameters().put('certId', cert.Id);
+        return pdfPage.getContentAsPDF();
+    }
+
+    private void sendCertificateEmail(Certificate__c cert) {
+        if (cert.Enrollment__r.Student__r.Email == null) {
+            return;
+        }
+
+        Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
+        email.setToAddresses(new String[]{ cert.Enrollment__r.Student__r.Email });
+        email.setSubject('Your Certificate - ' + cert.Enrollment__r.Course__r.Name);
+        email.setPlainTextBody(
+            'Congratulations ' + cert.Enrollment__r.Student__r.Name +
+            '! You have successfully completed ' + cert.Enrollment__r.Course__r.Name +
+            '. Your certificate is attached.'
+        );
+
+        List<ContentVersion> cv = [
+            SELECT VersionData, Title
+            FROM ContentVersion
+            WHERE FirstPublishLocationId = :cert.Id
+            ORDER BY CreatedDate DESC
+            LIMIT 1
+        ];
+
+        if (!cv.isEmpty()) {
+            Messaging.EmailFileAttachment attachment = new Messaging.EmailFileAttachment();
+            attachment.setFileName(cv[0].Title + '.pdf');
+            attachment.setBody(cv[0].VersionData);
+            email.setFileAttachments(new List<Messaging.EmailFileAttachment>{ attachment });
+        }
+
+        Messaging.sendEmail(new List<Messaging.SingleEmailMessage>{ email });
+    }
+}
