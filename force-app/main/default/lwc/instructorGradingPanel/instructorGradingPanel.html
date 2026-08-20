@@ -1,0 +1,57 @@
+<template>
+    <lightning-card title="Grading Panel" icon-name="standard:task">
+        <div class="slds-p-around_medium">
+            <template if:true={isLoading}>
+                <lightning-spinner alternative-text="Loading submissions"></lightning-spinner>
+            </template>
+
+            <template if:true={error}>
+                <div class="slds-text-color_error">Unable to load submissions.</div>
+            </template>
+
+            <template if:false={isLoading}>
+                <template if:true={hasSubmissions}>
+                    <template for:each={submissions} for:item="sub">
+                        <div key={sub.Id} class="slds-box slds-m-bottom_medium">
+                            <p class="slds-text-title_bold">
+                                {sub.Enrollment__r.Student__r.Name}
+                            </p>
+                            <p class="slds-text-body_small slds-m-bottom_small">
+                                Submitted: {sub.Submitted_On__c}
+                            </p>
+
+                            <lightning-input
+                                type="number"
+                                label="Score"
+                                value={sub.draftScore}
+                                data-id={sub.Id}
+                                onchange={handleScoreChange}
+                                class="slds-m-bottom_small">
+                            </lightning-input>
+
+                            <lightning-textarea
+                                label="Feedback"
+                                value={sub.draftFeedback}
+                                data-id={sub.Id}
+                                onchange={handleFeedbackChange}
+                                class="slds-m-bottom_small">
+                            </lightning-textarea>
+
+                            <lightning-button
+                                label="Save Grade"
+                                variant="brand"
+                                data-id={sub.Id}
+                                onclick={handleSave}
+                                disabled={isSaving}>
+                            </lightning-button>
+                        </div>
+                    </template>
+                </template>
+
+                <template if:false={hasSubmissions}>
+                    <p class="slds-text-align_center">No submissions yet.</p>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
+</template>
