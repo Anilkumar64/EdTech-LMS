@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>TEST ASSESSMENT FULL Q2</label>
+    <protected>false</protected>
+    <values>
+        <field>Assessment_Name__c</field>
+        <value xsi:type="xsd:string">TEST_ASSESSMENT_FULL</value>
+    </values>
+    <values>
+        <field>Correct_Answer__c</field>
+        <value xsi:type="xsd:string">C</value>
+    </values>
+    <values>
+        <field>Question_Id__c</field>
+        <value xsi:type="xsd:string">Q2</value>
+    </values>
+</CustomMetadata>
