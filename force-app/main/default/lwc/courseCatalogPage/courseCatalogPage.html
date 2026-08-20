@@ -1,0 +1,55 @@
+<template>
+    <lightning-card title="Course Catalog" icon-name="standard:education">
+        <div class="slds-p-around_medium">
+
+            <!-- Filters -->
+            <div class="slds-grid slds-wrap slds-gutters slds-m-bottom_medium">
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                    <lightning-combobox label="Level" value={levelFilter} options={levelOptions}
+                        onchange={handleLevelChange}>
+                    </lightning-combobox>
+                </div>
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                    <lightning-input type="number" label="Min Duration (hrs)" value={minDuration}
+                        onchange={handleDurationChange}>
+                    </lightning-input>
+                </div>
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                    <lightning-input type="number" label="Max Price" value={maxPrice} onchange={handlePriceChange}>
+                    </lightning-input>
+                </div>
+            </div>
+
+            <!-- Loading -->
+            <template if:true={isLoading}>
+                <lightning-spinner alternative-text="Loading courses"></lightning-spinner>
+            </template>
+
+            <!-- Error -->
+            <template if:true={error}>
+                <div class="slds-text-color_error">Unable to load courses.</div>
+            </template>
+
+            <!-- Course Grid -->
+            <template if:false={isLoading}>
+                <div class="slds-grid slds-wrap slds-gutters">
+                    <template for:each={filteredCourses} for:item="course">
+                        <div key={course.Id}
+                            class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3 slds-m-bottom_medium">
+                            <c-course-card course={course} onenroll={handleEnroll}>
+                            </c-course-card>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- No results -->
+                <template if:true={hasNoCourses}>
+                    <p class="slds-text-align_center slds-m-top_large">
+                        No courses match your filters.
+                    </p>
+                </template>
+            </template>
+
+        </div>
+    </lightning-card>
+</template>
