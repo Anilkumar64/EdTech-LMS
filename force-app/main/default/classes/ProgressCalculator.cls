@@ -1,101 +1,116 @@
 public with sharing class ProgressCalculator {
 
-    public static void recalculateProgress(Set<Id> enrollmentIds) {
+    public static void recalculate(Set<Id> enrollmentIds) {
         if (enrollmentIds == null || enrollmentIds.isEmpty()) {
             return;
         }
 
-        List<Enrollment__c> enrollmentsToUpdate = new List<Enrollment__c>();
-        List<Enrollment__c> enrollments = [
-            SELECT Id, Course__c, Progress__c, Status__c
+        // 1. Map Enrollment → Course
+        Map<Id, Id> enrollmentToCourse = new Map<Id, Id>();
+        for (Enrollment__c e : [
+            SELECT Id, Course__c
             FROM Enrollment__c
             WHERE Id IN :enrollmentIds
-        ];
-
-        Set<Id> courseIds = new Set<Id>();
-        for (Enrollment__c enr : enrollments) {
-            if (enr.Course__c != null) {
-                courseIds.add(enr.Course__c);
-            }
+        ]) {
+            enrollmentToCourse.put(e.Id, e.Course__c);
         }
 
-        Map<Id, Set<Id>> moduleIdsByCourse = new Map<Id, Set<Id>>();
-        Set<Id> moduleIds = new Set<Id>();
-        for (Module__c module : [
+        Set<Id> courseIds = new Set<Id>(enrollmentToCourse.values());
+
+        // 2. All Modules for these Courses
+        Map<Id, List<Id>> modulesByCourse = new Map<Id, List<Id>>();
+        Map<Id, Id> moduleToCourse = new Map<Id, Id>();
+
+        for (Module__c m : [
             SELECT Id, Course__c
             FROM Module__c
             WHERE Course__c IN :courseIds
         ]) {
-            if (!moduleIdsByCourse.containsKey(module.Course__c)) {
-                moduleIdsByCourse.put(module.Course__c, new Set<Id>());
+            if (!modulesByCourse.containsKey(m.Course__c)) {
+                modulesByCourse.put(m.Course__c, new List<Id>());
             }
-            moduleIdsByCourse.get(module.Course__c).add(module.Id);
-            moduleIds.add(module.Id);
+            modulesByCourse.get(m.Course__c).add(m.Id);
+            moduleToCourse.put(m.Id, m.Course__c);
         }
 
-        Map<Id, Set<Id>> assignmentIdsByModule = new Map<Id, Set<Id>>();
-        Set<Id> assignmentIds = new Set<Id>();
-        for (Assignment__c assignment : [
+        // 3. All Assignments under those Modules
+        Map<Id, List<Id>> assignmentsByModule = new Map<Id, List<Id>>();
+        for (Assignment__c a : [
             SELECT Id, Module__c
             FROM Assignment__c
-            WHERE Module__c IN :moduleIds
+            WHERE Module__c IN :moduleToCourse.keySet()
         ]) {
-            if (!assignmentIdsByModule.containsKey(assignment.Module__c)) {
-                assignmentIdsByModule.put(assignment.Module__c, new Set<Id>());
+            if (!assignmentsByModule.containsKey(a.Module__c)) {
+                assignmentsByModule.put(a.Module__c, new List<Id>());
             }
-            assignmentIdsByModule.get(assignment.Module__c).add(assignment.Id);
-            assignmentIds.add(assignment.Id);
+            assignmentsByModule.get(a.Module__c).add(a.Id);
         }
 
-        Map<Id, Set<Id>> completedAssignmentIdsByEnrollment = new Map<Id, Set<Id>>();
-        for (Submission__c sub : [
+        // 4. All scored Submissions for these Enrollments
+        // Map: EnrollmentId → Set of AssignmentIds that have Score != null
+        Map<Id, Set<Id>> scoredAssignmentsByEnrollment = new Map<Id, Set<Id>>();
+        for (Submission__c s : [
             SELECT Enrollment__c, Assignment__c
             FROM Submission__c
             WHERE Enrollment__c IN :enrollmentIds
-            AND Assignment__c IN :assignmentIds
-            AND Score__c != null
+              AND Score__c != null
         ]) {
-            if (!completedAssignmentIdsByEnrollment.containsKey(sub.Enrollment__c)) {
-                completedAssignmentIdsByEnrollment.put(sub.Enrollment__c, new Set<Id>());
+            if (!scoredAssignmentsByEnrollment.containsKey(s.Enrollment__c)) {
+                scoredAssignmentsByEnrollment.put(s.Enrollment__c, new Set<Id>());
             }
-            completedAssignmentIdsByEnrollment.get(sub.Enrollment__c).add(sub.Assignment__c);
+            scoredAssignmentsByEnrollment.get(s.Enrollment__c).add(s.Assignment__c);
         }
 
-        List<Id> eligibleForCertificate = new List<Id>();
+        // 5. Calculate progress per Enrollment
+        List<Enrollment__c> toUpdate = new List<Enrollment__c>();
+        Set<Id> completedEnrollmentIds = new Set<Id>();
 
-        for (Enrollment__c enr : enrollments) {
-            Set<Id> courseModules = moduleIdsByCourse.get(enr.Course__c);
-            Integer total = courseModules == null ? 0 : courseModules.size();
-            Integer completed = 0;
-            Set<Id> completedAssignments = completedAssignmentIdsByEnrollment.containsKey(enr.Id)
-                ? completedAssignmentIdsByEnrollment.get(enr.Id)
-                : new Set<Id>();
+        for (Id enrollmentId : enrollmentIds) {
+            Id courseId = enrollmentToCourse.get(enrollmentId);
+            List<Id> moduleIds = modulesByCourse.containsKey(courseId)
+                ? modulesByCourse.get(courseId) : new List<Id>();
 
-            if (courseModules != null) {
-                for (Id moduleId : courseModules) {
-                    Set<Id> moduleAssignments = assignmentIdsByModule.get(moduleId);
-                    if (moduleAssignments != null && !moduleAssignments.isEmpty()
-                        && completedAssignments.containsAll(moduleAssignments)) {
-                        completed++;
+            Integer totalModules = moduleIds.size();
+            Integer completedModules = 0;
+
+            Set<Id> scoredAssignments = scoredAssignmentsByEnrollment.containsKey(enrollmentId)
+                ? scoredAssignmentsByEnrollment.get(enrollmentId) : new Set<Id>();
+
+            for (Id moduleId : moduleIds) {
+                List<Id> assignmentIds = assignmentsByModule.containsKey(moduleId)
+                    ? assignmentsByModule.get(moduleId) : new List<Id>();
+
+                // Module is completed if it has no assignments OR all its assignments are scored
+                Boolean moduleCompleted = true;
+                for (Id assignmentId : assignmentIds) {
+                    if (!scoredAssignments.contains(assignmentId)) {
+                        moduleCompleted = false;
+                        break;
                     }
+                }
+                if (moduleCompleted) {
+                    completedModules++;
                 }
             }
 
-            Decimal pct = (total == null || total == 0) ? 0 : (completed * 100.0 / total);
-            enr.Progress__c = pct.setScale(2);
+            Decimal pct = totalModules == 0 ? 0 : (completedModules * 100.0) / totalModules;
+
+            toUpdate.add(new Enrollment__c(
+                Id = enrollmentId,
+                Progress__c = pct
+            ));
 
             if (pct == 100) {
-                eligibleForCertificate.add(enr.Id);
+                completedEnrollmentIds.add(enrollmentId);
             }
-            enrollmentsToUpdate.add(enr);
         }
 
-        if (!enrollmentsToUpdate.isEmpty()) {
-            update enrollmentsToUpdate;
+        if (!toUpdate.isEmpty()) {
+            update toUpdate;
         }
 
-        if (!eligibleForCertificate.isEmpty()) {
-            CertificateService.evaluateAndIssue(new Set<Id>(eligibleForCertificate));
+        if (!completedEnrollmentIds.isEmpty()) {
+            CertificateService.checkEligibility(completedEnrollmentIds);
         }
     }
 }
