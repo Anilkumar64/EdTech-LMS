@@ -1,0 +1,29 @@
+<template>
+    <lightning-card title="My Progress" icon-name="standard:goals">
+        <div class="slds-p-around_medium">
+            <template if:true={isLoading}>
+                <lightning-spinner alternative-text="Loading progress"></lightning-spinner>
+            </template>
+
+            <template if:true={error}>
+                <div class="slds-text-color_error">Unable to load progress.</div>
+            </template>
+
+            <template if:false={isLoading}>
+                <lightning-progress-bar
+                    value={progress}
+                    size="large"
+                    variant={progressVariant}>
+                </lightning-progress-bar>
+                <p class="slds-text-align_center slds-m-top_x-small slds-text-body_small">
+                    {progressLabel}
+                </p>
+
+                <div class="slds-m-top_medium">
+                    <p><strong>Assignments:</strong> {assignmentStatus}</p>
+                    <p class="slds-m-top_x-small"><strong>Assessment:</strong> {assessmentResult}</p>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>
