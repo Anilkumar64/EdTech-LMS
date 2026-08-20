@@ -10,9 +10,6 @@ public class LmsTestDataFactory {
     }
 
     public static Scenario createScenario(String token, Integer moduleCount, Integer assignmentsPerModule, Boolean withAssessment) {
-        // Prevent Twilio callout failures from EnrollmentTrigger in tests
-        Test.setMock(HttpCalloutMock.class, new TwilioSuccessMock());
-
         Scenario data = new Scenario();
         data.student = new Contact(
             LastName = 'Student ' + token,
@@ -62,8 +59,7 @@ public class LmsTestDataFactory {
             Course__c = data.course.Id,
             Enrollment_Date__c = Date.today(),
             Payment_Status__c = 'Paid',
-            Status__c = 'Active',
-            Progress__c = 0
+            Status__c = 'Active'
         );
         insert data.enrollment;
 
@@ -91,14 +87,5 @@ public class LmsTestDataFactory {
             ));
         }
         return submissions;
-    }
-
-    private class TwilioSuccessMock implements HttpCalloutMock {
-        public HttpResponse respond(HttpRequest req) {
-            HttpResponse res = new HttpResponse();
-            res.setStatusCode(201);
-            res.setBody('{"sid":"SM_test","status":"queued"}');
-            return res;
-        }
     }
 }
