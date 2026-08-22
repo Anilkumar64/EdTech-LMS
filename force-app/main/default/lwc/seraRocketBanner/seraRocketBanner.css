@@ -1,0 +1,138 @@
+.rocket-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #3b82f6 100%);
+    border-radius: 16px;
+    padding: 2.8rem 2.5rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+    margin-bottom: 1.5rem;
+}
+
+.left-content {
+    max-width: 55%;
+    z-index: 2;
+}
+
+.badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 0.35rem 1rem;
+    border-radius: 30px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 1.2rem;
+    letter-spacing: 0.5px;
+}
+
+.main-title {
+    font-size: 2.4rem;
+    font-weight: 800;
+    margin: 0 0 1rem 0;
+    line-height: 1.15;
+}
+
+.description {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin-bottom: 1.8rem;
+    line-height: 1.5;
+}
+
+.experience-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+}
+
+.tag {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 0.4rem 0.95rem;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    backdrop-filter: blur(4px);
+}
+
+/* Right Side Visual */
+.right-visual {
+    position: relative;
+    width: 220px;
+    height: 180px;
+    z-index: 2;
+}
+
+.rocket {
+    font-size: 4.5rem;
+    position: absolute;
+    bottom: 20px;
+    left: 30px;
+    animation: fly 3.5s ease-in-out infinite;
+}
+
+.moon {
+    font-size: 3.2rem;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    opacity: 0.9;
+}
+
+.stars span {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: white;
+    border-radius: 50%;
+    opacity: 0.7;
+}
+
+.stars span:nth-child(1) {
+    top: 20px;
+    left: 40px;
+}
+
+.stars span:nth-child(2) {
+    top: 50px;
+    left: 90px;
+}
+
+.stars span:nth-child(3) {
+    top: 80px;
+    left: 30px;
+}
+
+.stars span:nth-child(4) {
+    top: 30px;
+    left: 150px;
+}
+
+.stars span:nth-child(5) {
+    top: 110px;
+    left: 120px;
+}
+
+.stars span:nth-child(6) {
+    top: 60px;
+    left: 180px;
+}
+
+/* Rocket Animation */
+@keyframes fly {
+    0% {
+        transform: translate(0, 0) rotate(-25deg);
+    }
+
+    50% {
+        transform: translate(25px, -40px) rotate(-15deg);
+    }
+
+    100% {
+        transform: translate(0, 0) rotate(-25deg);
+    }
+}
