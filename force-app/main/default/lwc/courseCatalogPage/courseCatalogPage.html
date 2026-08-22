@@ -1,47 +1,50 @@
 <template>
     <lightning-card title="Course Catalog" icon-name="standard:education">
-        <div class="slds-p-around_medium">
+        <div class="slds-p-around_medium catalog-container">
 
-            <div class="slds-grid slds-wrap slds-gutters slds-m-bottom_medium">
-                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+            <!-- Filters -->
+            <div class="filters">
+                <div class="filter-item">
                     <lightning-combobox label="Level" value={levelFilter} options={levelOptions}
                         onchange={handleLevelChange}>
                     </lightning-combobox>
                 </div>
-                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                <div class="filter-item">
                     <lightning-input type="number" label="Min Duration (hrs)" value={minDuration}
                         onchange={handleDurationChange}>
                     </lightning-input>
                 </div>
-                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                <div class="filter-item">
                     <lightning-input type="number" label="Max Price" value={maxPrice} onchange={handlePriceChange}>
                     </lightning-input>
                 </div>
             </div>
 
+            <!-- Loading -->
             <template if:true={isLoading}>
                 <lightning-spinner alternative-text="Loading courses"></lightning-spinner>
             </template>
 
+            <!-- Error -->
             <template if:true={error}>
-                <div class="slds-text-color_error">Unable to load courses.</div>
+                <div class="slds-text-color_error slds-text-align_center">
+                    Unable to load courses.
+                </div>
             </template>
 
+            <!-- Course Cards -->
             <template if:false={isLoading}>
-                <div class="slds-grid slds-wrap slds-gutters">
+                <div class="course-grid">
                     <template for:each={filteredCourses} for:item="course">
-                        <div key={course.Id}
-                            class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3 slds-m-bottom_medium">
-                            <c-course-card course={course} onenroll={handleEnroll}>
-                            </c-course-card>
-                        </div>
+                        <c-course-card key={course.Id} course={course} onenroll={handleEnroll}>
+                        </c-course-card>
                     </template>
                 </div>
 
                 <template if:true={hasNoCourses}>
-                    <p class="slds-text-align_center slds-m-top_large">
+                    <div class="no-courses">
                         No courses match your filters.
-                    </p>
+                    </div>
                 </template>
             </template>
 

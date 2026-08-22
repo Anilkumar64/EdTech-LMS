@@ -1,0 +1,38 @@
+/* Main Card */
+.catalog-container {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+/* Filter Section */
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.8rem;
+    padding: 1.2rem;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.filter-item {
+    flex: 1;
+    min-width: 180px;
+}
+
+/* Course Grid */
+.course-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Empty State */
+.no-courses {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #64748b;
+    font-size: 1.1rem;
+}
