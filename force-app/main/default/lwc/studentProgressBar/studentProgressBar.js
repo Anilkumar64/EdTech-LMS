@@ -17,6 +17,7 @@ export default class StudentProgressBar extends LightningElement {
             this.progress = data.progress || 0;
             this.assignmentStatus = data.assignmentStatus || 'Not Started';
             this.assessmentResult = data.assessmentResult || 'Pending';
+            this.error = undefined;
         } else if (error) {
             this.error = error;
         }
@@ -29,6 +30,6 @@ export default class StudentProgressBar extends LightningElement {
     }
 
     get progressLabel() {
-        return `${this.progress}% Complete`;
+        return this.progress + '% Complete';
     }
 }
