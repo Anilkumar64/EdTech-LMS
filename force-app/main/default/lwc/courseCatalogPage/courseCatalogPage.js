@@ -1,5 +1,7 @@
 import { LightningElement, wire, track } from 'lwc';
 import getActiveCourses from '@salesforce/apex/CourseController.getActiveCourses';
+import enrollStudent from '@salesforce/apex/EnrollmentController.enrollStudent';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 export default class CourseCatalogPage extends LightningElement {
     @track courses = [];
@@ -48,21 +50,33 @@ export default class CourseCatalogPage extends LightningElement {
     applyFilters() {
         this.filteredCourses = this.courses.filter(c => {
             const matchLevel = !this.levelFilter || c.Level__c === this.levelFilter;
-            const matchDuration = this.minDuration == null || (c.Duration_Hours__c >= this.minDuration);
-            const matchPrice = this.maxPrice == null || (c.Price__c <= this.maxPrice);
+            const matchDuration = this.minDuration == null || c.Duration_Hours__c >= this.minDuration;
+            const matchPrice = this.maxPrice == null || c.Price__c <= this.maxPrice;
             return matchLevel && matchDuration && matchPrice;
         });
     }
 
-    handleEnroll(event) {
+    async handleEnroll(event) {
         const courseId = event.detail.courseId;
-        this.dispatchEvent(new CustomEvent('enrollrequest', {
-            detail: { courseId }
-        }));
+        if (!courseId) return;
+
+        try {
+            await enrollStudent({ courseId: courseId });
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Success',
+                message: 'Successfully enrolled in the course!',
+                variant: 'success'
+            }));
+        } catch (error) {
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Error',
+                message: error.body?.message || 'Unable to enroll',
+                variant: 'error'
+            }));
+        }
     }
 
     get hasNoCourses() {
         return !this.isLoading && this.filteredCourses.length === 0;
     }
 }
-
