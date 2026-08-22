@@ -1,19 +1,10 @@
 public with sharing class CertificateService {
 
-    /**
-     * Called when Progress reaches 100%.
-     * Creates a Certificate__c record if one does not already exist.
-     *
-     * NOTE: Full "all assessments passed" check requires a student-level
-     * assessment result object (not present in the current data model).
-     * Currently we issue the certificate when Progress = 100%.
-     */
     public static void checkEligibility(Set<Id> enrollmentIds) {
         if (enrollmentIds == null || enrollmentIds.isEmpty()) {
             return;
         }
 
-        // Only consider enrollments that are truly at 100%
         List<Enrollment__c> eligibleEnrollments = [
             SELECT Id
             FROM Enrollment__c
@@ -25,7 +16,6 @@ public with sharing class CertificateService {
             return;
         }
 
-        // Prevent duplicate certificates
         Set<Id> alreadyHasCertificate = new Set<Id>();
         for (Certificate__c c : [
             SELECT Enrollment__c
@@ -45,8 +35,17 @@ public with sharing class CertificateService {
             }
         }
 
-        if (!certsToInsert.isEmpty()) {
-            insert certsToInsert;
+        if (certsToInsert.isEmpty()) {
+            return;
         }
+
+        insert certsToInsert;
+
+        // Generate PDF in background
+        Set<Id> certIds = new Set<Id>();
+        for (Certificate__c c : certsToInsert) {
+            certIds.add(c.Id);
+        }
+        System.enqueueJob(new CertificatePDFGenerator(certIds));
     }
 }
