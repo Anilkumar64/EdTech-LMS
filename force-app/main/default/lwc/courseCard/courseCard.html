@@ -1,11 +1,11 @@
 <template>
-    <lightning-card title={course.Name} icon-name="custom:custom63">
+    <lightning-card title={courseName} icon-name="custom:custom63">
         <div class="slds-p-horizontal_medium slds-p-bottom_medium">
             <p class="slds-text-body_small slds-m-bottom_x-small">
-                <strong>Level:</strong> {course.Level__c}
+                <strong>Level:</strong> {level}
             </p>
             <p class="slds-text-body_small slds-m-bottom_x-small">
-                <strong>Duration:</strong> {course.Duration_Hours__c} hrs
+                <strong>Duration:</strong> {duration}
             </p>
             <p class="slds-text-body_small slds-m-bottom_x-small">
                 <strong>Instructor:</strong> {instructorName}
@@ -17,10 +17,7 @@
                 {priceLabel}
             </p>
             <div class="slds-m-top_medium">
-                <lightning-button
-                    label="Enroll"
-                    variant="brand"
-                    onclick={handleEnroll}>
+                <lightning-button label="Enroll" variant="brand" onclick={handleEnroll}>
                 </lightning-button>
             </div>
         </div>
