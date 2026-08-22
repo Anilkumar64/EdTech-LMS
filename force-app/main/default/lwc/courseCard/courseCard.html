@@ -1,25 +1,23 @@
 <template>
-    <lightning-card title={courseName} icon-name="custom:custom63">
-        <div class="slds-p-horizontal_medium slds-p-bottom_medium">
-            <p class="slds-text-body_small slds-m-bottom_x-small">
-                <strong>Level:</strong> {level}
-            </p>
-            <p class="slds-text-body_small slds-m-bottom_x-small">
-                <strong>Duration:</strong> {duration}
-            </p>
-            <p class="slds-text-body_small slds-m-bottom_x-small">
-                <strong>Instructor:</strong> {instructorName}
-            </p>
-            <p class="slds-text-body_small slds-m-bottom_x-small">
-                <strong>Rating:</strong> {rating}
-            </p>
-            <p class="slds-text-heading_small slds-m-top_small">
-                {priceLabel}
-            </p>
-            <div class="slds-m-top_medium">
-                <lightning-button label="Enroll" variant="brand" onclick={handleEnroll}>
-                </lightning-button>
-            </div>
+    <div class="course-card">
+        <div class="course-title">{courseName}</div>
+
+        <div class="course-meta">
+            <strong>Level:</strong> {level}
         </div>
-    </lightning-card>
+        <div class="course-meta">
+            <strong>Duration:</strong> {duration}
+        </div>
+        <div class="course-meta">
+            <strong>Instructor:</strong> {instructorName}
+        </div>
+        <div class="course-meta">
+            <strong>Rating:</strong> {rating}
+        </div>
+
+        <div class="price">{priceLabel}</div>
+
+        <lightning-button class="enroll-btn" label="Enroll" variant="brand" onclick={handleEnroll}>
+        </lightning-button>
+    </div>
 </template>
