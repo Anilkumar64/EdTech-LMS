@@ -1,43 +1,56 @@
-public with sharing class ProgressController {
+public with sharing class StudentProgressController {
 
     @AuraEnabled(cacheable=true)
-    public static Map<String, Object> getEnrollmentProgress(Id enrollmentId) {
-        Map<String, Object> result = new Map<String, Object>{
-            'progress' => 0,
-            'assignmentStatus' => 'Not Started',
-            'assessmentResult' => 'Pending'
-        };
-
-        if (enrollmentId == null) {
-            return result;
-        }
-
-        Enrollment__c enroll = [
-            SELECT Progress__c
-            FROM Enrollment__c
-            WHERE Id = :enrollmentId
+    public static List<EnrollmentWrapper> getMyProgress() {
+        User currentUser = [
+            SELECT Email 
+            FROM User 
+            WHERE Id = :UserInfo.getUserId() 
             LIMIT 1
         ];
-        result.put('progress', enroll.Progress__c != null ? enroll.Progress__c : 0);
 
-        Integer totalSubs = [
-            SELECT COUNT() FROM Submission__c WHERE Enrollment__c = :enrollmentId
-        ];
-        Integer scoredSubs = [
-            SELECT COUNT() FROM Submission__c
-            WHERE Enrollment__c = :enrollmentId AND Score__c != null
-        ];
-
-        if (totalSubs == 0) {
-            result.put('assignmentStatus', 'Not Started');
-        } else if (scoredSubs == totalSubs) {
-            result.put('assignmentStatus', 'All Graded');
-        } else {
-            result.put('assignmentStatus', scoredSubs + ' of ' + totalSubs + ' graded');
+        if (String.isBlank(currentUser.Email)) {
+            return new List<EnrollmentWrapper>();
         }
 
-        result.put('assessmentResult', enroll.Progress__c == 100 ? 'Passed' : 'Pending');
+        List<Contact> contacts = [
+            SELECT Id 
+            FROM Contact 
+            WHERE Email = :currentUser.Email 
+            LIMIT 1
+        ];
 
+        if (contacts.isEmpty()) {
+            return new List<EnrollmentWrapper>();
+        }
+
+        List<Enrollment__c> enrollments = [
+            SELECT Id, Name, Progress__c, Status__c,
+                   Course__r.Name, Course__r.Level__c
+            FROM Enrollment__c
+            WHERE Student__c = :contacts[0].Id
+            ORDER BY CreatedDate DESC
+        ];
+
+        List<EnrollmentWrapper> result = new List<EnrollmentWrapper>();
+
+        for (Enrollment__c e : enrollments) {
+            EnrollmentWrapper w = new EnrollmentWrapper();
+            w.enrollmentId   = e.Id;
+            w.courseName     = e.Course__r.Name;
+            w.level          = e.Course__r.Level__c;
+            w.progress       = e.Progress__c != null ? e.Progress__c : 0;
+            w.status         = e.Status__c;
+            result.add(w);
+        }
         return result;
+    }
+
+    public class EnrollmentWrapper {
+        @AuraEnabled public Id enrollmentId;
+        @AuraEnabled public String courseName;
+        @AuraEnabled public String level;
+        @AuraEnabled public Decimal progress;
+        @AuraEnabled public String status;
     }
 }
